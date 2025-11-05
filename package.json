@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "react-router-dom": "^7.9.5",
     "three": "^0.180.0"
   }
 }
