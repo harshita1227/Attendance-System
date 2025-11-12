@@ -1,15 +1,30 @@
+/* 🌌 GLOBAL FIX FOR BACKGROUND OVERLAP */
+canvas {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 0 !important; /* behind everything */
+  pointer-events: none;   /* prevents click blocking */
+  overflow: hidden;
+}
+
+/* 🌈 MAIN DASHBOARD WRAPPER */
 .dashboard-page {
   position: relative;
   width: 100%;
   height: 100vh;
-  overflow: hidden;
+  overflow-x: hidden;
   font-family: "Poppins", sans-serif;
   display: flex;
   justify-content: center;
   align-items: center;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.4s ease, color 0.4s ease;
+  z-index: 1; /* content above canvas */
 }
 
+/* 🌟 DASHBOARD CONTENT CONTAINER */
 .dashboard-container {
   position: relative;
   z-index: 2;
@@ -19,27 +34,36 @@
   padding: 40px;
   width: 85%;
   max-width: 900px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  color: var(--text-color);
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.25);
+  color: var(--text-color, #222);
+  animation: fadeIn 0.8s ease;
 }
 
+/* 🌙 THEME TOGGLE BUTTON */
 .theme-toggle {
   position: absolute;
   top: 20px;
   right: 30px;
-  font-size: 1.5rem;
+  font-size: 1.6rem;
   cursor: pointer;
   z-index: 3;
+  transition: transform 0.3s ease;
 }
 
+.theme-toggle:hover {
+  transform: rotate(15deg);
+}
+
+/* 🧑‍🎓 HEADER SECTION */
 .dashboard-header {
   text-align: center;
   margin-bottom: 30px;
 }
 
 .dashboard-header h1 {
-  font-size: 2rem;
-  margin-bottom: 5px;
+  font-size: 2.1rem;
+  font-weight: 600;
+  margin-bottom: 8px;
 }
 
 .dashboard-header p {
@@ -47,11 +71,12 @@
   opacity: 0.8;
 }
 
+/* 📦 CARD SECTION */
 .dashboard-content {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-around;
-  gap: 20px;
+  gap: 25px;
 }
 
 .dashboard-card {
@@ -60,12 +85,14 @@
   border-radius: 15px;
   width: 260px;
   text-align: center;
-  transition: transform 0.2s ease, background 0.3s ease;
+  transition: transform 0.25s ease, background 0.35s ease, box-shadow 0.3s;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
 
 .dashboard-card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-6px) scale(1.02);
   background: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
 }
 
 .dashboard-card h2 {
@@ -76,25 +103,30 @@
 .dashboard-card p {
   font-size: 1rem;
   margin-bottom: 15px;
+  opacity: 0.9;
 }
 
+/* 🖱️ BUTTON STYLES */
 .btn {
   background: #3b82f6;
   color: white;
   border: none;
-  padding: 10px 20px;
+  padding: 10px 22px;
   border-radius: 10px;
   cursor: pointer;
-  transition: 0.2s;
+  font-weight: 500;
+  transition: all 0.25s ease;
 }
 
 .btn:hover {
   background: #2563eb;
+  transform: scale(1.05);
 }
 
+/* 🚪 FOOTER LOGOUT BUTTON */
 .dashboard-footer {
   text-align: center;
-  margin-top: 30px;
+  margin-top: 35px;
 }
 
 .logout-btn {
@@ -104,15 +136,59 @@
   padding: 10px 25px;
   border-radius: 10px;
   cursor: pointer;
-  transition: 0.3s;
+  transition: all 0.3s ease;
+  font-weight: 500;
 }
 
 .logout-btn:hover {
   background: #dc2626;
+  transform: scale(1.05);
 }
 
-/* Dark Mode */
+/* 🌑 DARK MODE OVERRIDES */
 .dark .dashboard-container {
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.45);
   color: #f1f1f1;
+}
+
+.dark .dashboard-card {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.dark .dashboard-card:hover {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+/* ✨ ANIMATIONS */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 📱 RESPONSIVE */
+@media (max-width: 768px) {
+  .dashboard-container {
+    width: 95%;
+    padding: 25px;
+  }
+
+  .dashboard-card {
+    width: 90%;
+  }
+
+  .theme-toggle {
+    top: 15px;
+    right: 20px;
+    font-size: 1.3rem;
+  }
+
+  .dashboard-header h1 {
+    font-size: 1.7rem;
+  }
 }

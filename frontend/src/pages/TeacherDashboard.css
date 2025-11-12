@@ -1,0 +1,83 @@
+/* ... [Keep all your existing CSS styles above this section] ... */
+
+/* ============ CREATE SESSION BOX ============ */
+
+/* Ensure the box is centered and has the background blur */
+.create-session-box {
+  text-align: center;
+  /* Reduced max-width to match the image's small central box */
+  max-width: 500px; 
+  background: rgba(255, 255, 255, 0.95); 
+  backdrop-filter: blur(12px);
+  padding: 30px;
+  border-radius: 20px;
+  margin: 20px auto;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  color: #222;
+}
+
+.create-session-box h2 {
+  font-size: 1.6rem;
+  margin-bottom: 5px;
+}
+
+.create-session-box p {
+  opacity: 0.85;
+  margin-bottom: 25px;
+}
+
+/* Style for the main Create/Refresh button */
+.create-session-box .btn {
+  margin-bottom: 20px;
+}
+
+/* --- Session Display Container --- */
+.session-display {
+  display: flex;
+  flex-direction: column; /* Stacks children vertically */
+  align-items: center; /* Centers children horizontally */
+  justify-content: center;
+  margin-top: 20px;
+}
+
+/* Session Code Text */
+.session-display h3 {
+  font-size: 1.3rem;
+  margin-bottom: 15px; /* Space above QR code */
+}
+
+.session-display b {
+  /* Style for the code number itself */
+  color: #ef4444; 
+  font-size: 1.5rem;
+  font-weight: 700;
+  display: inline;
+}
+
+
+/* --- QR Wrapper Styling (Centering the QR) --- */
+.qr-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto; /* Center it */
+  padding: 10px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  /* Added a bottom margin to separate QR from the note */
+  margin-bottom: 15px; 
+}
+
+.qr-wrapper canvas {
+  width: 120px !important;
+  height: 120px !important;
+}
+
+/* Note text below QR */
+.note.refresh-note {
+  font-size: 0.9rem;
+  color: #666;
+  font-style: italic;
+  margin-top: 0; /* Already added margin to QR wrapper */
+}

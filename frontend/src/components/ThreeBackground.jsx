@@ -17,6 +17,10 @@ const ThreeBackground = () => {
 
     const renderer = new THREE.WebGLRenderer({ alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
+
+    // ✅ Add a special class name to the background canvas
+    renderer.domElement.classList.add("background-canvas");
+
     mountRef.current.appendChild(renderer.domElement);
 
     // Light
@@ -69,9 +73,7 @@ const ThreeBackground = () => {
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener("resize", handleResize);
 
-      if (renderer) {
-        renderer.dispose();
-      }
+      if (renderer) renderer.dispose();
 
       if (
         mountRef.current &&

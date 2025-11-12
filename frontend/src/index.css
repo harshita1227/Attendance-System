@@ -1,3 +1,4 @@
+@import "tailwindcss";
 /* Default light theme */
 body[data-theme="light"] {
   --bg-color: #f5f5f5;

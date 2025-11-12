@@ -24,7 +24,6 @@ const LoginPage = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // ✅ Fixed handleSubmit
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -44,7 +43,9 @@ const LoginPage = () => {
       const data = await res.json();
 
       if (res.ok) {
-        // ✅ Detect userType safely (works for any backend structure)
+        alert(`✅ ${data.message || "Login successful!"}`);
+
+        // ✅ Identify correct user type
         const type =
           data.userType ||
           data.user?.userType ||
@@ -52,20 +53,20 @@ const LoginPage = () => {
           data.teacher?.userType ||
           userType;
 
-        // ✅ Extract user data safely
+        // ✅ Extract user data
         const userData = data.user || data.student || data.teacher || {};
 
-        // ✅ Save to localStorage
-        localStorage.setItem("user", JSON.stringify(userData));
-
-        alert(`✅ ${data.message || "Login successful!"}`);
-
-        // ✅ Redirect based on user type
+        // ✅ Save properly for dashboard use
         if (type === "student") {
+          localStorage.setItem("studentData", JSON.stringify(userData));
+          localStorage.setItem("studentToken", data.token || "dummy-token");
           navigate("/student-dashboard");
         } else if (type === "teacher") {
+          localStorage.setItem("teacherData", JSON.stringify(userData));
+          localStorage.setItem("teacherToken", data.token || "dummy-token");
           navigate("/teacher-dashboard");
         } else {
+          localStorage.setItem("user", JSON.stringify(userData));
           navigate("/dashboard");
         }
       } else {
