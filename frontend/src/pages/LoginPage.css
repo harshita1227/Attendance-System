@@ -142,3 +142,18 @@ body {
 .register-btn:hover {
   text-decoration: underline;
 }
+
+.theme-toggle-icon {
+  background: transparent;
+  border: none;
+  font-size: 1.6rem;
+  cursor: pointer;
+  position: absolute;
+  top: 15px;
+  right: 25px;
+  transition: transform 0.3s ease;
+}
+
+.theme-toggle-icon:hover {
+  transform: rotate(20deg) scale(1.1);
+}

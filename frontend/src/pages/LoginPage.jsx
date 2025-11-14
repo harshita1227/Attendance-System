@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ThreeBackground from "../components/ThreeBackground";
+import { useTheme } from "../context/ThemeContext"; // ✅ Import global theme
 import "./LoginPage.css";
 
 const LoginPage = () => {
-  const [isDark, setIsDark] = useState(false);
+  const { theme, toggleTheme } = useTheme(); // ✅ Use global theme context
   const [userType, setUserType] = useState("student");
   const [formData, setFormData] = useState({
     email: "",
@@ -14,11 +15,6 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
-
-  const toggleTheme = () => {
-    setIsDark(!isDark);
-    document.body.className = isDark ? "light" : "dark";
-  };
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -45,7 +41,6 @@ const LoginPage = () => {
       if (res.ok) {
         alert(`✅ ${data.message || "Login successful!"}`);
 
-        // ✅ Identify correct user type
         const type =
           data.userType ||
           data.user?.userType ||
@@ -53,10 +48,8 @@ const LoginPage = () => {
           data.teacher?.userType ||
           userType;
 
-        // ✅ Extract user data
         const userData = data.user || data.student || data.teacher || {};
 
-        // ✅ Save properly for dashboard use
         if (type === "student") {
           localStorage.setItem("studentData", JSON.stringify(userData));
           localStorage.setItem("studentToken", data.token || "dummy-token");
@@ -83,13 +76,14 @@ const LoginPage = () => {
   const goToRegister = () => navigate("/register");
 
   return (
-    <div className={`login-container ${isDark ? "dark" : "light"}`}>
+    <div className={`login-container ${theme}`}>
       <ThreeBackground />
 
       <div className="login-box">
+        {/* 🌙 Simple Theme Toggle Button */}
         <div className="toggle-container">
-          <button onClick={toggleTheme} className="theme-toggle">
-            {isDark ? "☀ Light Mode" : "🌙 Dark Mode"}
+          <button onClick={toggleTheme} className="theme-toggle-icon">
+            {theme === "light" ? "🌙" : "☀️"}
           </button>
         </div>
 

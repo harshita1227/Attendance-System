@@ -4,7 +4,11 @@ const AttendanceSession = () => {
   const [teacher, setTeacher] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sessionCode, setSessionCode] = useState("");
+  const [sessionId, setSessionId] = useState("");
   const [qrData, setQrData] = useState("");
+  const [creatingSession, setCreatingSession] = useState(false);
+  const [sessionError, setSessionError] = useState("");
+  const [sessionSuccess, setSessionSuccess] = useState("");
   const [error, setError] = useState("");
 
   // ✅ Fetch teacher data from localStorage or API
@@ -14,13 +18,10 @@ const AttendanceSession = () => {
         const storedTeacher = JSON.parse(localStorage.getItem("teacherData"));
         const token = localStorage.getItem("teacherToken");
 
-        // If data exists in localStorage
         if (storedTeacher && token) {
           setTeacher(storedTeacher);
-          generateSessionCode(); // generate new code on mount
           setLoading(false);
         } else {
-          // If no local data, redirect or show error
           setError("Please login again.");
         }
       } catch (err) {
@@ -32,18 +33,49 @@ const AttendanceSession = () => {
     fetchTeacher();
   }, []);
 
-  // ✅ Function to generate random session code and QR
-  const generateSessionCode = () => {
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    setSessionCode(code);
-    setQrData(code);
+  // ✅ Hit backend to create a new session and receive session code + id
+  const handleCreateSession = async () => {
+    if (!teacher?._id) {
+      setError("Teacher information missing. Please login again.");
+      return;
+    }
+
+    try {
+      setCreatingSession(true);
+      setError("");
+      setSessionError("");
+      setSessionSuccess("");
+
+      const response = await fetch("http://localhost:5000/api/session/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ teacherId: teacher._id }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to create session");
+      }
+
+      const code = data.sessionCode || "";
+      const id = data.sessionId || "";
+
+      setSessionCode(code);
+      setQrData(code);
+      setSessionId(id);
+      setSessionSuccess("New attendance session started!");
+    } catch (err) {
+      console.error("Create session error:", err);
+      setSessionError(err.message || "Unable to create session. Try again.");
+    } finally {
+      setCreatingSession(false);
+    }
   };
 
-  // ✅ Auto-refresh QR and code every 1 min
-  useEffect(() => {
-    const interval = setInterval(generateSessionCode, 60000);
-    return () => clearInterval(interval);
-  }, []);
+  const hasActiveSession = Boolean(sessionCode);
 
   // ✅ Logout handler
   const handleLogout = () => {
@@ -52,7 +84,6 @@ const AttendanceSession = () => {
     window.location.href = "/login"; // redirect to login
   };
 
-  // ✅ Loading state
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen text-gray-600">
@@ -61,7 +92,6 @@ const AttendanceSession = () => {
     );
   }
 
-  // ✅ Error state
   if (error) {
     return (
       <div className="flex items-center justify-center min-h-screen text-red-500 font-semibold">
@@ -95,36 +125,65 @@ const AttendanceSession = () => {
               </span>{" "}
               Attendance Session
             </h3>
+
             <p className="text-gray-600 mb-4">
-              Click below to generate a join code and QR.
+              Click the button below to start a new attendance session.
             </p>
 
             <button
-              className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-6 rounded-lg mb-6 transition-colors"
-              onClick={generateSessionCode}
+              className="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-6 rounded-lg mb-6 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              onClick={handleCreateSession}
+              disabled={creatingSession}
             >
-              🔄 Refresh Session
+              {creatingSession ? "Starting..." : "▶ Start Session"}
             </button>
 
-            <div className="text-2xl font-bold text-gray-800 mb-4">
-              Session Code: {sessionCode}
-            </div>
+            {sessionSuccess && (
+              <div className="text-sm text-green-600 mb-4">
+                {sessionSuccess}
+              </div>
+            )}
 
-            {/* ✅ QR Code (Dynamic from API) */}
-            <div className="flex justify-center mb-4">
-              <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?data=${qrData}&size=150x150`}
-                alt="QR Code"
-                className="border-4 border-gray-200 rounded"
-              />
-            </div>
+            {sessionError && (
+              <div className="text-sm text-red-500 mb-4">{sessionError}</div>
+            )}
 
-            <div className="text-sm text-blue-600 mb-6 flex items-center justify-center gap-2">
-              <span role="img" aria-label="refresh">
-                🔄
-              </span>
-              <span>Auto-refreshes every 1 minute for security.</span>
-            </div>
+            {hasActiveSession ? (
+              <>
+                <div className="text-lg text-gray-600 mb-2">
+                  Active Session ID:{" "}
+                  <span className="font-semibold text-gray-800">
+                    {sessionId}
+                  </span>
+                </div>
+
+                <div className="text-2xl font-bold text-gray-800 mb-4">
+                  Session Code: {sessionCode}
+                </div>
+
+                {/* ✅ Corrected QR Code */}
+                <div className="flex justify-center mb-4">
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?data=${qrData}&size=150x150`}
+                    alt="QR Code"
+                    className="border-4 border-gray-200 rounded"
+                  />
+                </div>
+
+                <div className="text-sm text-blue-600 mb-6 flex items-center justify-center gap-2">
+                  <span role="img" aria-label="info">
+                    ℹ
+                  </span>
+                  <span>
+                    Share the code or QR with students to mark attendance.
+                  </span>
+                </div>
+              </>
+            ) : (
+              <div className="text-sm text-gray-500 mb-6">
+                No active session yet. Start one to generate a code and QR.
+              </div>
+            )}
 
             <button
               className="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-6 rounded-lg transition-colors"
