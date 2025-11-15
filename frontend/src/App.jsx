@@ -4,6 +4,8 @@ import LoginPage from "./pages/LoginPage.jsx";
 import RegisterPage from "./pages/RegisterPage.jsx";
 import StudentDashboard from "./pages/StudentDashboard.jsx";
 import TeacherDashboard from "./pages/TeacherDashboard";
+import AttendanceSession from "./pages/AttendenceSession.jsx";
+
 function App() {
   return (
     <BrowserRouter>
@@ -19,8 +21,13 @@ function App() {
 
         {/* Student Dashboard */}
         <Route path="/student-dashboard" element={<StudentDashboard/>}/>
-        {/* StudentDashboard */}
+
+        {/* Teacher Dashboard */}
         <Route path="/teacher-dashboard" element={<TeacherDashboard />} />
+
+        <Route path="/attendance-session/:classId" element={<AttendanceSession />} />
+
+        
       </Routes>
     </BrowserRouter>
    
