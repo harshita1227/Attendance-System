@@ -25,6 +25,7 @@ function App() {
         {/* Teacher Dashboard */}
         <Route path="/teacher-dashboard" element={<TeacherDashboard />} />
 
+         
         <Route path="/attendance-session/:classId" element={<AttendanceSession />} />
 
         
