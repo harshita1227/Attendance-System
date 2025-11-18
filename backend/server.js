@@ -25,7 +25,7 @@ const userSchema = new mongoose.Schema({
   email: String,
   rollNumber: String,
   password: String,
-  userType: String, // "student" or "teacher"
+  userType: String, // "student" | "teacher"
 });
 
 const User = mongoose.model("User", userSchema);
@@ -116,7 +116,7 @@ app.post("/api/session/create", async (req, res) => {
 
     const sessionCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // End previous active sessions
+    // Deactivate previous sessions
     await Session.updateMany({ teacherId, isActive: true }, { isActive: false });
 
     const session = await Session.create({
@@ -135,7 +135,7 @@ app.post("/api/session/create", async (req, res) => {
 });
 
 // ---------------------------------------
-// 🔹 JOIN SESSION (Student)
+// 🔹 STUDENT JOIN SESSION (Manual Code Entry)
 // ---------------------------------------
 app.post("/api/session/join", async (req, res) => {
   try {
@@ -144,11 +144,11 @@ app.post("/api/session/join", async (req, res) => {
     const session = await Session.findOne({ sessionCode, isActive: true });
     if (!session) return res.status(400).json({ message: "Invalid or expired session" });
 
-    const alreadyJoined = session.attendees.find(
+    const already = session.attendees.find(
       (s) => s.rollNumber === student.rollNumber
     );
 
-    if (alreadyJoined)
+    if (already)
       return res.json({ message: "Attendance already marked!" });
 
     session.attendees.push(student);
@@ -161,8 +161,7 @@ app.post("/api/session/join", async (req, res) => {
 });
 
 // ---------------------------------------
-// 🔹 MARK ATTENDANCE USING QR
-// (STUDENT SCANS QR CODE)
+// 🔹 MARK ATTENDANCE USING QR SCAN
 // ---------------------------------------
 app.post("/api/attendance/mark", async (req, res) => {
   try {
@@ -171,13 +170,11 @@ app.post("/api/attendance/mark", async (req, res) => {
     if (!studentId || !sessionCode)
       return res.status(400).json({ message: "Missing data" });
 
-    // Check session code
     const session = await Session.findOne({ sessionCode, isActive: true });
     if (!session) return res.status(400).json({ message: "Invalid or expired session" });
 
     const student = await User.findById(studentId);
 
-    // Check if already marked
     const already = session.attendees.find(
       (a) => a.studentId?.toString() === studentId
     );
@@ -185,7 +182,6 @@ app.post("/api/attendance/mark", async (req, res) => {
     if (already)
       return res.json({ message: "Attendance already marked!" });
 
-    // Mark attendance
     session.attendees.push({
       studentId,
       name: student.name,
@@ -197,6 +193,24 @@ app.post("/api/attendance/mark", async (req, res) => {
     res.json({ message: "QR Attendance marked successfully!" });
   } catch (err) {
     res.status(500).json({ message: "Something went wrong" });
+  }
+});
+
+// ---------------------------------------
+// ✅ NEW: GET ATTENDANCE LIST FOR A SESSION
+// ---------------------------------------
+app.get("/api/session/:id", async (req, res) => {
+  try {
+    const session = await Session.findById(req.params.id);
+
+    if (!session)
+      return res.status(404).json({ message: "Session not found" });
+
+    res.json({
+      attendees: session.attendees,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching session details" });
   }
 });
 
