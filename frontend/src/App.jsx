@@ -5,6 +5,7 @@ import RegisterPage from "./pages/RegisterPage.jsx";
 import StudentDashboard from "./pages/StudentDashboard.jsx";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import AttendanceSession from "./pages/AttendenceSession.jsx";
+import AdminDashboard from "./pages/AdminDashboard";
 
 function App() {
   return (
@@ -27,6 +28,8 @@ function App() {
 
          
         <Route path="/attendance-session/:classId" element={<AttendanceSession />} />
+
+        <Route path="/admin-dashboard" element={<AdminDashboard />} />
 
         
       </Routes>

@@ -1,20 +1,31 @@
 import React, { useEffect, useState } from "react";
-
+import "./AttendancePage.css"; // Make sure this is added
 
 export default function AttendancePage({ student, onClose }) {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const [totalSessions, setTotalSessions] = useState(0);
+  const [present, setPresent] = useState(0);
+  const [absent, setAbsent] = useState(0);
+  const [percentage, setPercentage] = useState(0);
 
   const studentId = student?._id;
 
   useEffect(() => {
     async function loadAttendance() {
       try {
-        const res = await fetch(`http://localhost:5000/api/attendance/student/${studentId}`);
+        const res = await fetch(
+          `http://localhost:5000/api/attendance/student/${studentId}`
+        );
         const data = await res.json();
 
         if (res.ok) {
           setRecords(data.records || []);
+          setTotalSessions(data.totalSessions || 0);
+          setPresent(data.present || 0);
+          setAbsent(data.absent || 0); 
+          setPercentage(data.percentage || 0);
         }
       } catch (err) {
         console.error("Error loading attendance", err);
@@ -25,90 +36,71 @@ export default function AttendancePage({ student, onClose }) {
     loadAttendance();
   }, [studentId]);
 
-  // Calculate Stats
-  const totalPresent = records.filter(r => r.status === "Present").length;
-  const totalDays = records.length;
-  const percentage = totalDays === 0 ? 0 : Math.round((totalPresent / totalDays) * 100);
-
   return (
-    <div className="modal-overlay">
-      <div className="modal-content attendance-modal">
-        <button className="modal-close" onClick={onClose}>✖</button>
-
-        <div className="modal-header">
-          <div className="modal-icon-large">📅</div>
+    <div className="attendance-overlay" onClick={onClose}>
+      <div className="attendance-modal" onClick={(e) => e.stopPropagation()}>
+        
+        {/* Sticky Header */}
+        <div className="attendance-header">
           <h2>Your Attendance</h2>
-          <p>Complete record of all your attendance sessions</p>
+          <p>Summary of all your attendance sessions</p>
+          <button className="close-btn" onClick={onClose}>✖</button>
         </div>
 
-        {loading ? (
-          <p>Loading records...</p>
-        ) : (
-          <>
-            {/* Attendance Stats */}
-            <div className="attendance-stats">
-              <div className="stat-card">
-                <div className="stat-number">{totalDays}</div>
-                <div className="stat-label">Total Sessions</div>
-              </div>
+        {/* Stats Section */}
+        <div className="attendance-stats-box">
+          <div className="stat-card-new">
+            <h3>{totalSessions}</h3>
+            <p>Total Sessions</p>
+          </div>
 
-              <div className="stat-card">
-                <div className="stat-number">{totalPresent}</div>
-                <div className="stat-label">Present</div>
-              </div>
+          <div className="stat-card-new">
+            <h3>{present}</h3>
+            <p>Present</p>
+          </div>
 
-              <div className="stat-card">
-                <div className="stat-number">{percentage}%</div>
-                <div className="stat-label">Attendance %</div>
-              </div>
+          <div className="stat-card-new">
+            <h3>{absent}</h3>
+            <p>Absent</p>
+          </div>
+
+          <div className="stat-card-new highlight">
+            <h3>{percentage}%</h3>
+            <p>Attendance %</p>
+          </div>
+        </div>
+
+        {/* Records List */}
+        <div className="attendance-records-box">
+          <h3 className="records-title">Attendance Records</h3>
+
+          {loading ? (
+            <p className="loading-text">Loading...</p>
+          ) : records.length === 0 ? (
+            <div className="empty-state-new">
+              <span className="empty-icon">📭</span>
+              <p>No attendance marked yet.</p>
             </div>
+          ) : (
+            <div className="records-scroll">
+              {records.map((rec, index) => (
+                <div className="record-card" key={index}>
+                  <div className="record-top">
+                    <span className="record-number">#{index + 1}</span>
+                    <span className="status-tag">{rec.status}</span>
+                  </div>
 
-            {/* Attendance List */}
-            <div className="attendance-list">
-              <h3 className="list-title">Attendance Records</h3>
-
-              {records.length === 0 ? (
-                <div className="empty-state">
-                  <div className="empty-icon">📭</div>
-                  <h3>No Records Found</h3>
-                  <p>You haven't marked any attendance yet.</p>
+                  <div className="record-info-box">
+                    <p><span>Date:</span> {new Date(rec.date).toLocaleString()}</p>
+                    <p><span>Session Code:</span> {rec.sessionCode}</p>
+                    <p><span>Teacher:</span> {rec.teacherName}</p>
+                  </div>
                 </div>
-              ) : (
-                <div className="records-container">
-                  {records.map((record, index) => (
-                    <div className="attendance-record" key={index}>
-                      <div className="record-header">
-                        <div className="record-number">#{index + 1}</div>
-                        <div className="record-status">
-                          {record.status}
-                        </div>
-                      </div>
-
-                      <div className="record-body">
-                        <div className="record-info">
-                          <span className="record-label">Date:</span>
-                          <span className="record-value">
-                            {new Date(record.date).toLocaleString()}
-                          </span>
-                        </div>
-
-                        <div className="record-info">
-                          <span className="record-label">Session Code:</span>
-                          <span className="record-value code">{record.sessionCode}</span>
-                        </div>
-
-                        <div className="record-info">
-                          <span className="record-label">Teacher:</span>
-                          <span className="record-value">{record.teacherName}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              ))}
             </div>
-          </>
-        )}
+          )}
+        </div>
+
       </div>
     </div>
   );

@@ -49,26 +49,43 @@ body {
   font-weight: bold;
 }
 
+/* ------------------------------
+   USER TYPE SWITCH (Updated for Admin)
+------------------------------ */
 .user-switch {
   display: flex;
   justify-content: space-around;
   margin-bottom: 20px;
+  gap: 10px; /* ⭐ Added to support 3 buttons spacing */
 }
 
 .user-switch button {
+  flex: 1;  /* ⭐ EACH button same width */
   background: white;
   border: 1px solid currentColor;
   padding: 8px 20px;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.3s;
+  font-weight: 600;
 }
 
+.dark .user-switch button {
+  background: rgba(255,255,255,0.1);
+  color: #ddd;
+  border-color: #777;
+}
+
+/* ACTIVE BUTTON STYLING */
 .user-switch .active {
   background-color: #007bff;
-  color: white;
+  color: white !important;
   border: none;
+  box-shadow: 0 0 10px rgba(0,123,255,0.4);
+  transform: scale(1.05);
 }
+
+/* ------------------------------ */
 
 .login-form input {
   width: 100%;

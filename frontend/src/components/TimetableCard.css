@@ -1,0 +1,17 @@
+.timetable-box {
+  background: #fff;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  margin-bottom: 20px;
+}
+
+.timetable-item {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f3f0ff;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+}

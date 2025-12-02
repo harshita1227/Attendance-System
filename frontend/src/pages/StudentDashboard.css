@@ -651,3 +651,272 @@
     letter-spacing: 0.3rem;
   }
 }
+/* ---------- TOP HEADER ---------- */
+.top-header {
+  width: 90%;
+  max-width: 1200px;
+  margin: 20px auto;
+  padding: 18px 25px;
+  
+  background: white;
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* Left welcome text */
+.welcome-text h2 {
+  font-size: 1.6rem;
+  font-weight: 600;
+  margin: 0;
+  color: #333;
+}
+
+.welcome-text p {
+  font-size: 0.95rem;
+  color: #666;
+  margin-top: 4px;
+}
+
+/* Right logout button */
+.logout-btn-header {
+  background: linear-gradient(135deg, #ff5757, #d62828);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.2s ease-in-out;
+}
+
+.logout-btn-header:hover {
+  background: linear-gradient(135deg, #ff1e1e, #b41e1e);
+  transform: scale(1.05);
+}
+/* 🌈 Beautiful Background */
+.dashboard-page {
+  min-height: 100vh;
+  padding-bottom: 50px;
+  background: linear-gradient(135deg, #f7f8fc, #eef1f7);
+  position: relative;
+}
+
+/* 🌙 Dark Mode */
+.dashboard-page.dark {
+  background: linear-gradient(135deg, #1c1c1c, #2a2a2d);
+  color: white;
+}
+
+/* 🌗 Dark/Light Mode Floating Button */
+.theme-toggle {
+  position: fixed;
+  top: 25px;
+  right: 30px;
+  background: #1e90ff;
+  color: white;
+  padding: 12px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 20px;
+  transition: 0.3s ease-in-out;
+  z-index: 999;
+}
+
+.theme-toggle:hover {
+  transform: scale(1.15);
+  background: #0d6efd;
+}
+
+/* 🌸 Glassmorphic Header */
+.top-header {
+  width: 90%;
+  max-width: 1200px;
+  margin: 30px auto;
+  padding: 20px 35px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dashboard-page.dark .top-header {
+  background: rgba(40, 40, 40, 0.45);
+}
+
+/* Welcome Text */
+.welcome-text h2 {
+  font-size: 1.9rem;
+  font-weight: bold;
+  margin: 0;
+  color: #333;
+}
+
+.dashboard-page.dark .welcome-text h2 {
+  color: white;
+}
+
+.welcome-text p {
+  font-size: 1rem;
+  margin-top: 5px;
+  color: #666;
+}
+
+.dashboard-page.dark .welcome-text p {
+  color: #dddddd;
+}
+
+/* 🔴 Logout Button */
+.logout-btn-header {
+  background: linear-gradient(135deg, #ff6161, #d93636);
+  border: none;
+  color: white;
+  padding: 12px 24px;
+  font-size: 1rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.3s ease-in-out;
+  font-weight: 600;
+}
+
+.logout-btn-header:hover {
+  background: linear-gradient(135deg, #ff1e1e, #b41e1e);
+  transform: translateY(-2px) scale(1.05);
+}
+
+/* 📦 Main Container */
+.dashboard-container {
+  width: 90%;
+  max-width: 1300px;
+  margin: auto;
+  margin-top: 20px;
+}
+
+/* Grid layout */
+.dashboard-grid {
+  display: flex;
+  justify-content: center;
+  gap: 25px;
+  margin-bottom: 25px;
+  flex-wrap: wrap;
+}
+
+/* 📌 Cards */
+.dashboard-card {
+  width: 330px;
+  background: white;
+  padding: 25px;
+  border-radius: 18px;
+  text-align: center;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
+  transition: 0.3s ease-in-out;
+}
+
+.dashboard-page.dark .dashboard-card {
+  background: #2d2d33;
+  box-shadow: 0 5px 15px rgba(255, 255, 255, 0.06);
+}
+
+/* Hover effect */
+.dashboard-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.12);
+}
+
+/* Card icons */
+.card-icon {
+  font-size: 40px;
+  margin-bottom: 15px;
+}
+
+/* Buttons inside cards */
+.card-button {
+  margin-top: 15px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #6a5af9, #8e54e9);
+  border: none;
+  color: white;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.3s ease;
+  font-weight: 600;
+}
+
+.card-button:hover {
+  transform: scale(1.1);
+  opacity: 0.9;
+}
+
+/* Full width Scanner Card */
+.full-width {
+  width: 100%;
+  max-width: 1050px;
+  margin: auto;
+}
+
+/* ----------------------------------------------------
+   ⭐ EXTRA CSS FOR UPDATED STUDENT DASHBOARD (NO CHANGES TO OLD CSS)
+---------------------------------------------------- */
+
+/* Light/Dark support for new live class clean UI */
+.dashboard-page.dark .dashboard-card p {
+  color: #e2e2e2;
+}
+
+.dashboard-page.dark .dashboard-card h3 {
+  color: #fff;
+}
+
+/* Improve Join Class button state */
+.card-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Smooth hover for join class */
+.card-button:active {
+  transform: scale(0.97);
+}
+
+/* Ensure layout spacing stays identical */
+.dashboard-card .card-icon {
+  margin-bottom: 12px;
+}
+
+/* Fix spacing of the Join Class tip (if needed) */
+.join-tip {
+  font-size: 13px;
+  color: #666;
+  margin-top: 6px;
+}
+.dashboard-page.dark .join-tip {
+  color: #ccc;
+}
+
+/* Fix background for scanner card in dark mode */
+.dashboard-page.dark .full-width {
+  background: #2d2d33;
+}
+
+/* Keep consistency for any future live-info box (if you add it later) */
+.live-info-box {
+  margin-top: 10px;
+  background: #eef2ff;
+  border-left: 4px solid #4f46e5;
+  padding: 10px 12px;
+  border-radius: 12px;
+  text-align: left;
+  font-size: 0.9rem;
+}
+.dashboard-page.dark .live-info-box {
+  background: #2e2e38;
+  border-left-color: #8b5cf6;
+  color: #eee;
+}

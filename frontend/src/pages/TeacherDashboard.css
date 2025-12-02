@@ -1,83 +1,298 @@
-/* ... [Keep all your existing CSS styles above this section] ... */
-
-/* ============ CREATE SESSION BOX ============ */
-
-/* Ensure the box is centered and has the background blur */
-.create-session-box {
-  text-align: center;
-  /* Reduced max-width to match the image's small central box */
-  max-width: 500px; 
-  background: rgba(255, 255, 255, 0.95); 
-  backdrop-filter: blur(12px);
-  padding: 30px;
-  border-radius: 20px;
-  margin: 20px auto;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
-  color: #222;
-}
-
-.create-session-box h2 {
-  font-size: 1.6rem;
-  margin-bottom: 5px;
-}
-
-.create-session-box p {
-  opacity: 0.85;
-  margin-bottom: 25px;
-}
-
-/* Style for the main Create/Refresh button */
-.create-session-box .btn {
-  margin-bottom: 20px;
-}
-
-/* --- Session Display Container --- */
-.session-display {
+/* ————————————————————————
+   GLOBAL PAGE WRAPPER
+———————————————————————— */
+.teacher-wrap {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #eef1ff, #f6f7ff);
+  padding: 40px 20px;
   display: flex;
-  flex-direction: column; /* Stacks children vertically */
-  align-items: center; /* Centers children horizontally */
-  justify-content: center;
-  margin-top: 20px;
+  flex-direction: column;
+  align-items: center;
+  font-family: "Inter", sans-serif;
 }
 
-/* Session Code Text */
-.session-display h3 {
-  font-size: 1.3rem;
-  margin-bottom: 15px; /* Space above QR code */
-}
-
-.session-display b {
-  /* Style for the code number itself */
-  color: #ef4444; 
-  font-size: 1.5rem;
+/* ————————————————————————
+   WELCOME HEADER
+———————————————————————— */
+.welcome {
+  font-size: 32px;
   font-weight: 700;
-  display: inline;
+  margin-bottom: 25px;
+  color: #2c2c54;
+  text-align: center;
+  letter-spacing: -0.5px;
 }
 
+/* ————————————————————————
+   CARD UI (Modern Style B)
+———————————————————————— */
+.card {
+  width: 600px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  border-radius: 20px;
+  padding: 30px;
+  margin-bottom: 30px;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(230, 230, 255, 0.6);
+}
 
-/* --- QR Wrapper Styling (Centering the QR) --- */
-.qr-wrapper {
+.card h3 {
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  color: #3b2fcf;
+}
+
+/* ————————————————
+   CARD INPUTS
+——————————————— */
+.card input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #d6d6ff;
+  outline: none;
+  margin-bottom: 18px;
+  font-size: 15px;
+}
+
+.card input:focus {
+  border-color: #6b5bff;
+  box-shadow: 0 0 0 3px rgba(107, 91, 255, 0.2);
+}
+
+/* ————————————————
+   CARD BUTTONS
+——————————————— */
+.card button {
+  background: linear-gradient(135deg, #6a5bff, #8e78ff);
+  border: none;
+  padding: 12px 20px;
+  border-radius: 12px;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+  margin-right: 10px;
+  transition: 0.25s;
+  font-size: 15px;
+}
+
+.card button:hover {
+  background: linear-gradient(135deg, #5b4ae3, #7f65f0);
+}
+
+/* Green button (Live class) */
+.start-live-btn {
+  background: linear-gradient(135deg, #16a34a, #22c55e) !important;
+}
+
+.start-live-btn:hover {
+  background: linear-gradient(135deg, #15803d, #1faa4d) !important;
+}
+
+/* Disable button styling */
+.card button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ————————————————————————
+   QR / Attendance MODAL
+———————————————————————— */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 0 auto; /* Center it */
-  padding: 10px;
-  background: white;
+  z-index: 99999;
+}
+
+.modal-inner {
+  width: 500px;
+  max-height: 85vh;
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 25px;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25);
+  overflow-y: auto;
+  animation: popupFade 0.25s ease;
+}
+
+/* simple fade-in animation */
+@keyframes popupFade {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-inner button {
+  margin-top: 14px;
+}
+
+/* Scrollbar styling for modal */
+.modal-inner::-webkit-scrollbar {
+  width: 7px;
+}
+
+.modal-inner::-webkit-scrollbar-thumb {
+  background: #b8b9ff;
   border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-  /* Added a bottom margin to separate QR from the note */
-  margin-bottom: 15px; 
 }
 
-.qr-wrapper canvas {
-  width: 120px !important;
-  height: 120px !important;
+.modal-inner::-webkit-scrollbar-thumb:hover {
+  background: #8f92ff;
 }
 
-/* Note text below QR */
-.note.refresh-note {
-  font-size: 0.9rem;
+.slot-item {
+  padding: 10px;
+  background: #f3f4ff;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.active-class {
+  background: #c7d2fe;
+  border-left: 5px solid #4f46e5;
+}
+
+/* ============================================================
+   ⭐ TEACHER TIMETABLE — ADD THIS AT THE VERY END
+   (Non-destructive: does NOT modify your existing CSS)
+============================================================ */
+
+/* Timetable Card */
+.timetable-card {
+  width: 650px;
+  background: #ffffffcc;
+  backdrop-filter: blur(12px);
+  border-radius: 18px;
+  padding: 25px 30px;
+  margin-bottom: 25px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  font-family: 'Inter', sans-serif;
+}
+
+/* Heading */
+.timetable-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 15px;
+  color: #2d2a8e;
+  text-align: left;
+}
+
+/* Timetable Table */
+.timetable-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.timetable-table th {
+  background: #4f46e5;
+  color: white;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 6px;
+}
+
+.timetable-table td {
+  padding: 12px;
+  font-size: 14px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Highlight current class row */
+.current-class-row {
+  background: #e0e7ff;
+  font-weight: 600;
+}
+
+.current-class-row td {
+  color: #1e3a8a;
+}
+
+/* Button inside timetable */
+.start-class-btn {
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  font-size: 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.25s;
+  font-weight: 600;
+}
+
+.start-class-btn:hover {
+  background: linear-gradient(135deg, #15803d, #1faa4d);
+}
+
+/* Disabled button */
+.start-class-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Batch & subject styling */
+.timetable-subject {
+  font-weight: 600;
+  color: #2d2a8e;
+}
+
+.timetable-batch {
+  font-size: 13px;
+  color: #555;
+}
+
+/* No classes message */
+.no-class-today {
+  padding: 12px 0;
+  text-align: center;
   color: #666;
-  font-style: italic;
-  margin-top: 0; /* Already added margin to QR wrapper */
+  font-size: 15px;
+}
+
+/* Responsive */
+@media (max-width: 700px) {
+  .timetable-card {
+    width: 95%;
+    padding: 20px;
+  }
+
+  .timetable-table th,
+  .timetable-table td {
+    font-size: 12px;
+    padding: 10px;
+  }
+
+  .start-class-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+}
+.download-btn {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: #0077ff;
+  border: none;
+  color: white;
+  font-weight: bold;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.download-btn:hover {
+  background: #005ccc;
 }

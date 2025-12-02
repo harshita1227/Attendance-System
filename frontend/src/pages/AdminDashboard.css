@@ -1,0 +1,147 @@
+/* -------------------------------
+   ADMIN DASHBOARD PAGE WRAPPER
+-------------------------------- */
+.admin-page {
+  padding: 30px;
+  font-family: "Inter", sans-serif;
+  min-height: 100vh;
+  background: #f4f4ff;
+  animation: fadeIn 0.3s ease;
+}
+
+.dark .admin-page {
+  background: #0d1117;
+  color: #f5f5f5;
+}
+
+/* -------------------------------
+   HEADINGS
+-------------------------------- */
+.admin-page h1 {
+  font-size: 32px;
+  margin-bottom: 5px;
+  color: #2d2a8e;
+}
+
+.dark .admin-page h1 {
+  color: #a5b4fc;
+}
+
+.admin-page p {
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
+/* -------------------------------
+   ADD BUTTON
+-------------------------------- */
+.add-btn {
+  padding: 10px 18px;
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  border: none;
+  border-radius: 10px;
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
+  transition: 0.25s;
+  margin-bottom: 20px;
+}
+
+.add-btn:hover {
+  background: linear-gradient(135deg, #4338ca, #4f46e5);
+  transform: translateY(-2px);
+}
+
+/* -------------------------------
+   TIMETABLE GRID LAYOUT
+-------------------------------- */
+.table-container {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px;
+}
+
+/* -------------------------------
+   TIMETABLE CARD
+-------------------------------- */
+.slot-card {
+  background: rgba(255, 255, 255, 0.9);
+  padding: 18px;
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  transition: 0.25s;
+  backdrop-filter: blur(4px);
+  border-left: 5px solid #4f46e5;
+  animation: slideIn 0.25s ease;
+}
+
+.dark .slot-card {
+  background: rgba(255, 255, 255, 0.12);
+  border-left-color: #818cf8;
+  color: #fff;
+}
+
+.slot-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.16);
+}
+
+.slot-card h3 {
+  font-size: 20px;
+  margin-bottom: 8px;
+  color: #2d2a8e;
+}
+
+.dark .slot-card h3 {
+  color: #c7d2fe;
+}
+
+.slot-card p {
+  margin: 4px 0;
+  font-size: 14px;
+}
+
+/* -------------------------------
+   DELETE BUTTON
+-------------------------------- */
+.delete-btn {
+  margin-top: 12px;
+  padding: 8px 14px;
+  background: #ef4444;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.delete-btn:hover {
+  background: #dc2626;
+  transform: scale(1.03);
+}
+
+/* -------------------------------
+   ANIMATIONS
+-------------------------------- */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(15px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}

@@ -4,6 +4,9 @@ import Attendance from "../models/Attendance.js";
 
 const router = express.Router();
 
+/* ---------------------------------------
+   ✅ MARK ATTENDANCE (STUDENT SCANS QR)
+------------------------------------------ */
 router.post("/mark", async (req, res) => {
   try {
     const { studentId, sessionCode } = req.body;
@@ -12,7 +15,7 @@ router.post("/mark", async (req, res) => {
       return res.status(400).json({ message: "Missing fields" });
     }
 
-    // 1️⃣ Find session using sessionCode
+    // 1️⃣ Find session by code
     const session = await AttendanceSession.findOne({ sessionCode });
 
     if (!session) {
@@ -39,6 +42,38 @@ router.post("/mark", async (req, res) => {
     return res.json({ message: "Attendance marked successfully!" });
   } catch (error) {
     console.error("Attendance error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* ----------------------------------------------------
+   ✅ GET ATTENDANCE HISTORY FOR A STUDENT
+   FRONTEND: GET /api/attendance/student/:id
+------------------------------------------------------ */
+router.get("/student/:id", async (req, res) => {
+  try {
+    const studentId = req.params.id;
+
+    // 1️⃣ Fetch all attendance of the student
+    const attendanceRecords = await Attendance.find({ studentId })
+      .populate({
+        path: "sessionId",
+        populate: { path: "teacherId", select: "name" }
+      })
+      .sort({ timestamp: -1 });
+
+    // 2️⃣ Format as frontend expects
+    const formatted = attendanceRecords.map((rec) => ({
+      date: rec.timestamp,
+      status: "Present",
+      sessionCode: rec.sessionId?.sessionCode || "Unknown",
+      teacherName: rec.sessionId?.teacherId?.name || "Unknown"
+    }));
+
+    res.json({ records: formatted });
+
+  } catch (error) {
+    console.error("Fetch student attendance error:", error);
     res.status(500).json({ message: "Server error" });
   }
 });

@@ -1,213 +1,315 @@
-import React, { useEffect, useState } from "react";
-import "./TeacherDashboard.css";
+// ----------------------------------------------
+// TeacherDashboard.jsx (FULLY FIXED + OPTIMIZED)
+// ----------------------------------------------
 
-const AttendanceSession = () => {
+import React, { useEffect, useState, useCallback } from "react";
+import "./TeacherDashboard.css";
+import LiveClassModal from "../components/LiveClassModal";
+
+export default function TeacherDashboard() {
   const [teacher, setTeacher] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const [todaySlots, setTodaySlots] = useState([]);
+  const [currentClass, setCurrentClass] = useState(null);
+
+  // Live class states
+  const [liveSessionId, setLiveSessionId] = useState(null);
+  const [liveStudents, setLiveStudents] = useState([]);
+  const [showLiveModal, setShowLiveModal] = useState(false);
+
+  // QR
   const [sessionCode, setSessionCode] = useState("");
-  const [sessionId, setSessionId] = useState("");
-  const [qrData, setQrData] = useState("");
-  const [creatingSession, setCreatingSession] = useState(false);
-  const [sessionError, setSessionError] = useState("");
-  const [sessionSuccess, setSessionSuccess] = useState("");
-  const [error, setError] = useState("");
+  const [creatingQR, setCreatingQR] = useState(false);
 
-  // NEW STATES  
-  const [showAttendanceModal, setShowAttendanceModal] = useState(false);
-  const [attendanceList, setAttendanceList] = useState([]);
+  // normalize batch string
+  const normalize = (b) => (b ? b.trim().toLowerCase() : "");
 
-  // Load Teacher Data
+  // ----------------------------------------------
+  // LOAD TEACHER DATA
+  // ----------------------------------------------
   useEffect(() => {
-    const storedTeacher = JSON.parse(localStorage.getItem("teacherData"));
-    const token = localStorage.getItem("teacherToken");
+    const stored = JSON.parse(localStorage.getItem("teacherData"));
+    if (!stored) return;
 
-    if (storedTeacher && token) {
-      setTeacher(storedTeacher);
-      setLoading(false);
-    } else {
-      setError("Please login again.");
-    }
+    stored.batch = normalize(stored.batch);
+    setTeacher(stored);
+    setLoading(false);
   }, []);
 
-  // Create Attendance Session
-  const handleCreateSession = async () => {
-    if (!teacher?._id) {
-      setError("Teacher information missing. Please login again.");
-      return;
-    }
+  // ----------------------------------------------
+  // FETCH TODAY'S TIMETABLE
+  // ----------------------------------------------
+  const loadTeacherTimetable = useCallback(async () => {
+    if (!teacher?._id) return;
+
+    const day = new Date().toLocaleString("en-US", { weekday: "long" });
 
     try {
-      setCreatingSession(true);
-      setError("");
-      setSessionError("");
-      setSessionSuccess("");
+      const res = await fetch(
+        `http://localhost:5000/api/timetable/teacher/${teacher._id}`
+      );
 
-      const response = await fetch("http://localhost:5000/api/session/create", {
+      const slots = await res.json();
+
+      const today = slots.filter((s) => s.day === day);
+      today.forEach((s) => (s.batch = normalize(s.batch)));
+
+      setTodaySlots(today);
+      detectCurrentClass(today);
+    } catch (err) {
+      console.error("Error loading timetable:", err);
+    }
+  }, [teacher]);
+
+  useEffect(() => {
+    loadTeacherTimetable();
+  }, [loadTeacherTimetable]);
+
+  // Auto-refresh timetable every 20 seconds
+  useEffect(() => {
+    if (!teacher?._id) return;
+
+    const id = setInterval(loadTeacherTimetable, 20000);
+    return () => clearInterval(id);
+  }, [teacher, loadTeacherTimetable]);
+
+  // ----------------------------------------------
+  // DETECT CURRENT CLASS
+  // ----------------------------------------------
+  const detectCurrentClass = (slots) => {
+    const now = new Date();
+
+    const active = slots.find((slot) => {
+      const [sh, sm] = slot.startTime.split(":").map(Number);
+      const [eh, em] = slot.endTime.split(":").map(Number);
+
+      const start = new Date();
+      start.setHours(sh, sm, 0, 0);
+
+      const end = new Date();
+      end.setHours(eh, em, 0, 0);
+
+      return now >= start && now <= end;
+    });
+
+    setCurrentClass(active || null);
+  };
+
+  // ----------------------------------------------
+  // START LIVE CLASS
+  // ----------------------------------------------
+  const startLiveClass = async () => {
+    if (!currentClass)
+      return alert("❌ No class is currently running!");
+
+    try {
+      const res = await fetch("http://localhost:5000/api/live/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          teacherId: teacher._id,
+          subject: currentClass.subject,
+          batch: normalize(currentClass.batch),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) return alert(data.message);
+
+      setLiveSessionId(data.sessionId);
+      setShowLiveModal(true);
+
+      // Give backend time to initialize
+      setTimeout(fetchLiveStudents, 800);
+    } catch (err) {
+      alert("Error starting live class");
+    }
+  };
+
+  // ----------------------------------------------
+  // FETCH LIVE STUDENTS (teacher view)
+  // ----------------------------------------------
+  const fetchLiveStudents = async () => {
+    if (!teacher?._id) return;
+
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/live/${teacher._id}`
+      );
+
+      const data = await res.json();
+
+      if (data.active) {
+        setLiveStudents(data.students || []);
+        setLiveSessionId(data.sessionId);
+      } else {
+        setLiveStudents([]);
+      }
+    } catch (err) {
+      console.error("Error fetching live students:", err);
+    }
+  };
+
+  // auto-refresh modal every 4 sec
+  useEffect(() => {
+    if (!showLiveModal) return;
+
+    fetchLiveStudents();
+    const id = setInterval(fetchLiveStudents, 4000);
+
+    return () => clearInterval(id);
+  }, [showLiveModal]);
+
+  // ----------------------------------------------
+  // FLAG STUDENT
+  // ----------------------------------------------
+  const flagStudent = async (studentId) => {
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/live/flag/${liveSessionId}/${studentId}`,
+        { method: "POST" }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) return alert(data.message);
+
+      alert(
+        `🚩 Flag Added!\nFlags: ${data.flagCount}\n${
+          data.isBlocked ? "❌ BLOCKED" : ""
+        }`
+      );
+
+      fetchLiveStudents();
+    } catch (err) {
+      alert("Error flagging student");
+    }
+  };
+
+  // ----------------------------------------------
+  // CREATE QR SESSION
+  // ----------------------------------------------
+  const createQR = async () => {
+    setCreatingQR(true);
+
+    try {
+      const res = await fetch("http://localhost:5000/api/session/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ teacherId: teacher._id }),
       });
 
-      const data = await response.json();
-
-      if (!response.ok) throw new Error(data.message || "Failed to create session");
-
-      setSessionCode(data.sessionCode);
-      setSessionId(data.sessionId);
-      setQrData(data.sessionCode);
-
-      setSessionSuccess("New attendance session started!");
-    } catch (err) {
-      setSessionError(err.message);
-    } finally {
-      setCreatingSession(false);
-    }
-  };
-
-  // NEW: LOAD ATTENDANCE LIST  
-  const loadAttendance = async () => {
-    try {
-      const res = await fetch(`http://localhost:5000/api/session/${sessionId}`);
       const data = await res.json();
 
-      if (!res.ok) {
-        alert(data.message);
-        return;
-      }
-      setAttendanceList(data.attendees);
-      setShowAttendanceModal(true);
+      if (!res.ok) return alert(data.message);
+
+      setSessionCode(data.sessionCode);
     } catch (err) {
-      alert("Error loading attendance");
+      alert("Error creating QR session");
+    } finally {
+      setCreatingQR(false);
     }
   };
 
-  // Logout
-  const handleLogout = () => {
-    localStorage.removeItem("teacherData");
-    localStorage.removeItem("teacherToken");
-    window.location.href = "/login";
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen text-gray-600">
-        Loading your dashboard...
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen text-red-500 font-semibold">
-        {error}
-      </div>
-    );
-  }
+  // ----------------------------------------------
+  // UI
+  // ----------------------------------------------
+  if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8 flex flex-col items-center justify-center">
+    <div className="teacher-wrap">
 
-      {/* Welcome Section */}
-      <div className="welcome-section">
-        <h2 className="text-3xl font-bold text-gray-800 mb-2">
-          Welcome, {teacher?.name} 👋
-        </h2>
-        <p className="text-gray-600">Email: {teacher?.email}</p>
-      </div>
+      {/* WELCOME */}
+      <div className="welcome">Welcome, {teacher?.name}</div>
 
-      {/* Attendance Card */}
-      <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg p-8">
-        <div className="flex flex-col items-center">
+      {/* TODAY’S TIMETABLE */}
+      <div className="card">
+        <h3>📅 Today’s Timetable</h3>
 
-          <h3 className="text-2xl font-semibold text-gray-800 mb-3">
-            ⏰ Attendance Session
-          </h3>
-
-          <button
-            className="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-6 rounded-lg mb-6 transition-colors"
-            onClick={handleCreateSession}
-            disabled={creatingSession}
-          >
-            {creatingSession ? "Starting..." : "▶ Start Session"}
-          </button>
-
-          {sessionSuccess && <div className="text-sm text-green-600 mb-4">{sessionSuccess}</div>}
-          {sessionError && <div className="text-sm text-red-500 mb-4">{sessionError}</div>}
-
-          {sessionCode ? (
-            <>
-              <div className="text-lg text-gray-600 mb-2">
-                Active Session ID:{" "}
-                <span className="font-semibold text-gray-800">{sessionId}</span>
-              </div>
-
-              <div className="text-2xl font-bold text-gray-800 mb-4">
-                Session Code: {sessionCode}
-              </div>
-
-              <div className="flex justify-center mb-4">
-                <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?data=${qrData}&size=150x150`}
-                  alt="QR Code"
-                  className="border-4 border-gray-200 rounded"
-                />
-              </div>
-
-              {/* 🔥 NEW BUTTON */}
-              <button
-                className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-6 rounded-lg mt-3"
-                onClick={loadAttendance}
-              >
-                📋 View Attendance
-              </button>
-            </>
-          ) : (
-            <div className="text-sm text-gray-500 mb-6">
-              No active session yet. Start one to generate a code and QR.
+        {todaySlots.length === 0 ? (
+          <p>No class today.</p>
+        ) : (
+          todaySlots.map((s) => (
+            <div
+              key={s._id}
+              className={`slot-item ${
+                currentClass?._id === s._id ? "active-class" : ""
+              }`}
+            >
+              <b>{s.subject}</b> — {s.batch.toUpperCase()}
+              <br />
+              {s.startTime} – {s.endTime}
             </div>
-          )}
-
-          <button
-            className="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-6 rounded-lg mt-6"
-            onClick={handleLogout}
-          >
-            🚪 Logout
-          </button>
-
-        </div>
+          ))
+        )}
       </div>
 
-      {/* -------------- ATTENDANCE MODAL -------------- */}
-      {showAttendanceModal && (
-        <div className="modal-overlay" onClick={() => setShowAttendanceModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+      {/* LIVE CLASS */}
+      <div className="card">
+        <h3>🟢 Live Class</h3>
 
-            <button className="modal-close" onClick={() => setShowAttendanceModal(false)}>
-              ✖
+        {currentClass ? (
+          <>
+            <p>
+              Current: <b>{currentClass.subject}</b> (
+              {currentClass.batch.toUpperCase()})
+            </p>
+
+            <button className="start-live-btn" onClick={startLiveClass}>
+              Start Live Class
             </button>
 
-            <h2 className="text-xl font-bold mb-4">📋 Attendance List</h2>
+            {liveSessionId && (
+              <>
+                <button
+                  onClick={() => setShowLiveModal(true)}
+                  className="view-live-btn"
+                >
+                  View Live Students
+                </button>
 
-            {attendanceList.length === 0 ? (
-              <p className="text-gray-500">No students have marked attendance yet.</p>
-            ) : (
-              <ul className="attendance-list">
-                {attendanceList.map((s, index) => (
-                  <li key={index} className="attendance-item">
-                    <span>👤 {s.name}</span>
-                    <span>🎓 {s.rollNumber}</span>
-                    <span>⏰ {new Date(s.time).toLocaleTimeString()}</span>
-                  </li>
-                ))}
-              </ul>
+                {/* CSV DOWNLOAD BUTTON */}
+                <button
+                  className="download-btn"
+                  onClick={() =>
+                    window.open(
+                      `http://localhost:5000/api/attendance/session/${liveSessionId}/csv`,
+                      "_blank"
+                    )
+                  }
+                >
+                  ⬇️ Download Attendance CSV
+                </button>
+              </>
             )}
+          </>
+        ) : (
+          <p>❌ No class running right now</p>
+        )}
+      </div>
 
-          </div>
-        </div>
+      {/* QR ATTENDANCE */}
+      <div className="card">
+        <h3>📷 QR Attendance</h3>
+
+        <button onClick={createQR} disabled={creatingQR}>
+          {creatingQR ? "Starting..." : "Start QR Session"}
+        </button>
+
+        {sessionCode && <p className="qr-code-text">Session Code: {sessionCode}</p>}
+      </div>
+
+      {/* LIVE STUDENTS MODAL */}
+      {showLiveModal && (
+        <LiveClassModal
+          sessionId={liveSessionId}
+          subject={currentClass?.subject}
+          students={liveStudents}
+          onClose={() => setShowLiveModal(false)}
+          onFlag={flagStudent}
+        />
       )}
-
     </div>
   );
-};
-
-export default AttendanceSession;
+}
