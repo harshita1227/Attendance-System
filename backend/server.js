@@ -529,40 +529,50 @@ app.post("/api/live/join", async (req, res) => {
 // FLAG STUDENT
 // ----------------------------------------------
 
+// ----------------------------------------------
+// FLAG STUDENT → MARK ABSENT → REMOVE FROM LIVE
+// ----------------------------------------------
 app.post("/api/live/flag/:sessionId/:studentId", async (req, res) => {
   try {
     const { sessionId, studentId } = req.params;
 
-    const student = await User.findById(studentId);
-    if (!student)
-      return res.status(404).json({ message: "Student not found" });
-
-    student.flagCount += 1;
-    if (student.flagCount >= 3) student.isBlocked = true;
-    await student.save();
-
+    // 1️⃣ Find session
     const session = await Session.findById(sessionId);
     if (!session)
       return res.status(404).json({ message: "Session not found" });
 
-    const idx = session.liveStudents.findIndex(
-      (s) => s.studentId?.toString() === studentId
+    // 2️⃣ Find student inside live list
+    const index = session.liveStudents.findIndex(
+      (s) => s.studentId.toString() === studentId.toString()
     );
 
-    if (idx !== -1) {
-      session.liveStudents[idx].flagged = true;
-      await session.save();
-    }
+    if (index === -1)
+      return res.status(404).json({ message: "Student not in live class" });
 
-    res.json({
-      message: "Student flagged",
-      flagCount: student.flagCount,
-      isBlocked: student.isBlocked,
+    const removedStudent = session.liveStudents[index];
+
+    // 3️⃣ Remove from liveStudents array
+    session.liveStudents.splice(index, 1);
+
+    // 4️⃣ Mark ABSENT in this session
+    session.attendees = session.attendees.filter(
+      (a) => a.studentId?.toString() !== studentId.toString()
+    );
+
+    await session.save();
+
+    return res.json({
+      message: "Student flagged and marked ABSENT",
+      removedStudent,
+      students: session.liveStudents, // updated list
     });
-  } catch {
-    res.status(500).json({ message: "Flag error" });
+
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ message: "Server error" });
   }
 });
+
 
 // ----------------------------------------------
 // ATTENDANCE HISTORY
@@ -651,6 +661,27 @@ app.get("/api/attendance/session/:sessionId/csv", async (req, res) => {
     res.status(500).send("CSV generation error");
   }
 });
+
+// ----------------------------------------------
+// GET TOTAL REGISTERED STUDENTS IN A BATCH
+// ----------------------------------------------
+app.get("/api/batch/count/:batch", async (req, res) => {
+  try {
+    const batchRaw = req.params.batch;
+    const batch = batchRaw.trim().toLowerCase();
+
+    const count = await User.countDocuments({
+      role: "student",
+      batch: new RegExp(`^${batch}$`, "i"),
+    });
+
+    res.json({ total: count });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Batch count error" });
+  }
+});
+
 
 // ----------------------------------------------
 // ROOT ENDPOINT
