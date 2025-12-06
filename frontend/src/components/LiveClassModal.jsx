@@ -14,29 +14,33 @@ export default function LiveClassModal({
   const [absentStudents, setAbsentStudents] = useState([]);
 
   // -------------------------------------------
-  // CALCULATE ABSENT STUDENTS FROM REAL DATA
+  // CALCULATE ABSENT STUDENTS SAFELY (NO LOOP)
   // -------------------------------------------
   useEffect(() => {
-    if (!registeredStudents.length) {
-      setAbsentStudents([]);
-      return;
-    }
+    if (!registeredStudents.length) return;
 
-    const liveIds = students.map((s) => s.studentId);
+    const presentIds = students.map((s) => s.studentId);
 
-    const absentees = registeredStudents.filter(
-      (stu) => !liveIds.includes(stu._id) && !liveIds.includes(stu.studentId)
+    const absList = registeredStudents.filter(
+      (stu) => !presentIds.includes(stu._id)
     );
 
     // Format for UI
-    const formatted = absentees.map((s) => ({
+    const formatted = absList.map((s) => ({
       name: s.name,
       rollNumber: s.rollNumber,
       studentId: s._id,
     }));
 
-    setAbsentStudents(formatted);
-  }, [students, registeredStudents]);
+    // Prevent infinite loop: update only if changed
+    setAbsentStudents((prev) => {
+      const same =
+        prev.length === formatted.length &&
+        prev.every((p, i) => p.studentId === formatted[i]?.studentId);
+
+      return same ? prev : formatted;
+    });
+  }, [students, registeredStudents]); // SAFE
 
   return (
     <div className="live-overlay" onClick={onClose}>
@@ -48,7 +52,7 @@ export default function LiveClassModal({
           <button className="close" onClick={onClose}>✖</button>
         </div>
 
-        {/* SESSION INFO */}
+        {/* SESSION ID */}
         <p className="live-session-id">
           <b>Session ID:</b> {sessionId}
         </p>
@@ -98,15 +102,34 @@ export default function LiveClassModal({
           </button>
         </div>
 
+        {/* MARK PRESENT BUTTON */}
+<div className="mark-present-wrap">
+  <button
+    className="mark-present-btn"
+    onClick={async () => {
+      await fetch("http://localhost:5000/api/live/mark-present", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId }),
+      });
+
+      alert("All present students marked successfully!");
+    }}
+  >
+    ✔ Mark All Present
+  </button>
+</div>
+
+
         {/* STUDENT LIST */}
         <div className="live-list">
           {showPresent ? (
-            // --------------- PRESENT LIST ---------------
+            // ---------------- PRESENT LIST ----------------
             students.length === 0 ? (
               <div className="no-students">No student is present.</div>
             ) : (
-              students.map((s, i) => (
-                <div key={i} className="live-item present-item">
+              students.map((s) => (
+                <div key={s.studentId} className="live-item present-item">
                   <div>
                     <div className="live-name">{s.name}</div>
                     <div className="live-roll">{s.rollNumber}</div>
@@ -127,12 +150,12 @@ export default function LiveClassModal({
               ))
             )
           ) : (
-            // --------------- ABSENT LIST ---------------
+            // ---------------- ABSENT LIST ----------------
             absentStudents.length === 0 ? (
               <div className="no-students">No student is absent.</div>
             ) : (
-              absentStudents.map((s, i) => (
-                <div key={i} className="live-item absent-item">
+              absentStudents.map((s) => (
+                <div key={s.studentId} className="live-item absent-item">
                   <div>
                     <div className="live-name">{s.name}</div>
                     <div className="live-roll">{s.rollNumber}</div>

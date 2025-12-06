@@ -39,7 +39,6 @@ export default function AdminDashboard() {
 
       setTimetable(Array.isArray(data.slots) ? data.slots : []);
       setLoading(false);
-
     } catch (err) {
       console.error("Error loading timetable:", err);
       setLoading(false);
@@ -51,11 +50,10 @@ export default function AdminDashboard() {
     if (!window.confirm("Delete this timetable slot?")) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/api/timetable/delete/${id}`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ adminId: admin._id }),
-      });
+      const res = await fetch(
+        `http://localhost:5000/api/timetable/delete/${id}`,
+        { method: "DELETE" }
+      );
 
       const text = await res.text();
       let data;
@@ -68,13 +66,12 @@ export default function AdminDashboard() {
       }
 
       if (!res.ok) {
-        alert(data.message || "Error deleting");
+        alert(data.message || "Error deleting slot");
         return;
       }
 
-      alert("🗑 Slot Deleted");
-      fetchTimetable();
-
+      alert("🗑 Slot Deleted Successfully");
+      fetchTimetable(); // reload updated timetable
     } catch (err) {
       console.error("Delete Error:", err);
       alert("Error deleting slot");
@@ -111,10 +108,18 @@ export default function AdminDashboard() {
             <div className="slot-card" key={slot._id}>
               <h3>{slot.subject}</h3>
 
-              <p><b>Teacher:</b> {slot.teacherId?.name || "Unknown"}</p>
-              <p><b>Batch:</b> {slot.batch}</p>
-              <p><b>Day:</b> {slot.day}</p>
-              <p><b>Time:</b> {slot.startTime} – {slot.endTime}</p>
+              <p>
+                <b>Teacher:</b> {slot.teacherId?.name || "Unknown"}
+              </p>
+              <p>
+                <b>Batch:</b> {slot.batch}
+              </p>
+              <p>
+                <b>Day:</b> {slot.day}
+              </p>
+              <p>
+                <b>Time:</b> {slot.startTime} – {slot.endTime}
+              </p>
 
               <button
                 className="delete-btn"

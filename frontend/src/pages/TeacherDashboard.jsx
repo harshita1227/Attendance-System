@@ -1,5 +1,5 @@
 // ----------------------------------------------
-// TeacherDashboard.jsx (FULLY FIXED + UPDATED FLAG LOGIC + BATCH COUNTS + REGISTERED STUDENTS)
+// TeacherDashboard.jsx (UPDATED FOR REAL PRESENT/ABSENT)
 // ----------------------------------------------
 
 import React, { useEffect, useState, useCallback } from "react";
@@ -18,11 +18,9 @@ export default function TeacherDashboard() {
   const [liveStudents, setLiveStudents] = useState([]);
   const [showLiveModal, setShowLiveModal] = useState(false);
 
-  // Additional stat: total students in the batch
+  // Batch stats
   const [totalBatchStudents, setTotalBatchStudents] = useState(0);
-
-  // Registered students list (full objects) for this batch
-  const [registeredStudents, setRegisteredStudents] = useState([]);
+  const [registeredStudents, setRegisteredStudents] = useState([]); // <--- NEW
 
   // QR
   const [sessionCode, setSessionCode] = useState("");
@@ -72,7 +70,6 @@ export default function TeacherDashboard() {
     loadTeacherTimetable();
   }, [loadTeacherTimetable]);
 
-  // Auto-refresh timetable every 20 seconds
   useEffect(() => {
     if (!teacher?._id) return;
 
@@ -81,34 +78,31 @@ export default function TeacherDashboard() {
   }, [teacher, loadTeacherTimetable]);
 
   // ----------------------------------------------
-  // FETCH TOTAL REGISTERED STUDENTS FOR A BATCH (and full list)
+  // FETCH REGISTERED STUDENTS LIST FOR REAL ABSENT
   // ----------------------------------------------
   const fetchRegisteredStudents = async (batch) => {
     if (!batch) return;
+
     try {
-      // fetch full student list for the batch (server route should return { students: [...] })
       const res = await fetch(
-        `http://localhost:5000/api/students/batch/${encodeURIComponent(batch)}`
+        `http://localhost:5000/api/batch/students/${encodeURIComponent(batch)}`
       );
+
       if (!res.ok) {
-        console.warn("Registered students fetch failed");
-        setRegisteredStudents([]);
-        setTotalBatchStudents(0);
+        console.log("Registered student list fetch failed");
         return;
       }
+
       const data = await res.json();
-      // data.students expected to be an array of student objects
       setRegisteredStudents(data.students || []);
-      setTotalBatchStudents((data.students && data.students.length) || 0);
+      setTotalBatchStudents(data.students?.length || 0);
     } catch (err) {
-      console.error("Batch students fetch error:", err);
-      setRegisteredStudents([]);
-      setTotalBatchStudents(0);
+      console.log("Registered list error:", err);
     }
   };
 
   // ----------------------------------------------
-  // DETECT CURRENT CLASS
+  // DETECT CURRENT CLASS → LOAD FULL STUDENT LIST
   // ----------------------------------------------
   const detectCurrentClass = (slots) => {
     const now = new Date();
@@ -128,9 +122,8 @@ export default function TeacherDashboard() {
 
     setCurrentClass(active || null);
 
-    // If we found an active class, fetch batch registered students for it
-    if (active && active.batch) {
-      fetchRegisteredStudents(active.batch);
+    if (active) {
+      fetchRegisteredStudents(active.batch); // <--- NEW
     } else {
       setRegisteredStudents([]);
       setTotalBatchStudents(0);
@@ -160,18 +153,15 @@ export default function TeacherDashboard() {
       setLiveSessionId(data.sessionId);
       setShowLiveModal(true);
 
-      // Give backend time to initialize then fetch live students
       setTimeout(fetchLiveStudents, 800);
 
-      // ensure registered list is up-to-date
-      if (currentClass?.batch) fetchRegisteredStudents(currentClass.batch);
     } catch (err) {
       alert("Error starting live class");
     }
   };
 
   // ----------------------------------------------
-  // FETCH LIVE STUDENTS (teacher view)
+  // FETCH LIVE STUDENTS
   // ----------------------------------------------
   const fetchLiveStudents = async () => {
     if (!teacher?._id) return;
@@ -183,8 +173,6 @@ export default function TeacherDashboard() {
       if (data.active) {
         setLiveStudents(data.students || []);
         setLiveSessionId(data.sessionId);
-        // keep registered list in sync (if we have a current class)
-        if (currentClass?.batch) fetchRegisteredStudents(currentClass.batch);
       } else {
         setLiveStudents([]);
       }
@@ -193,7 +181,6 @@ export default function TeacherDashboard() {
     }
   };
 
-  // auto-refresh modal every 4 sec
   useEffect(() => {
     if (!showLiveModal) return;
 
@@ -204,7 +191,7 @@ export default function TeacherDashboard() {
   }, [showLiveModal]);
 
   // ----------------------------------------------
-  // FLAG STUDENT → Remove from live list & mark ABSENT
+  // FLAG STUDENT
   // ----------------------------------------------
   const flagStudent = async (studentId) => {
     try {
@@ -217,19 +204,18 @@ export default function TeacherDashboard() {
 
       if (!res.ok) return alert(data.message);
 
-      // Remove from live students in UI immediately
-      setLiveStudents((prev) => prev.filter((s) => s.studentId !== studentId));
+      setLiveStudents((prev) =>
+        prev.filter((s) => s.studentId !== studentId)
+      );
 
-      // Optionally: remove from registered list's "present" mapping (we keep registered list intact;
-      // present/absent is computed in modal using liveStudents vs registeredStudents)
-      alert("🚩 Student marked absent & removed from live class");
+      alert("🚩 Student flagged & marked absent");
     } catch (err) {
       alert("Error flagging student");
     }
   };
 
   // ----------------------------------------------
-  // CREATE QR SESSION
+  // CREATE QR
   // ----------------------------------------------
   const createQR = async () => {
     setCreatingQR(true);
@@ -258,18 +244,18 @@ export default function TeacherDashboard() {
   // ----------------------------------------------
   if (loading) return <div>Loading...</div>;
 
-  // compute derived numbers
   const joinedCount = liveStudents.length;
-  const totalCount = totalBatchStudents || 0;
-  const notJoined = Math.max(0, totalCount - joinedCount);
-  const percentage = totalCount ? Math.round((joinedCount / totalCount) * 100) : 0;
+  const totalCount = totalBatchStudents;
+  const notJoined = totalCount - joinedCount;
+  const percentage = totalCount
+    ? Math.round((joinedCount / totalCount) * 100)
+    : 0;
 
   return (
     <div className="teacher-wrap">
-      {/* WELCOME */}
       <div className="welcome">Welcome, {teacher?.name}</div>
 
-      {/* TODAY’S TIMETABLE */}
+      {/* Timetable */}
       <div className="card">
         <h3>📅 Today’s Timetable</h3>
 
@@ -291,7 +277,7 @@ export default function TeacherDashboard() {
         )}
       </div>
 
-      {/* LIVE CLASS */}
+      {/* Live class */}
       <div className="card">
         <h3>🟢 Live Class</h3>
 
@@ -302,11 +288,10 @@ export default function TeacherDashboard() {
               {currentClass.batch.toUpperCase()})
             </p>
 
-            {/* NEW STATS */}
-            <p>👥 Total Students (registered): <b>{totalCount}</b></p>
+            <p>👥 Total Registered: <b>{totalCount}</b></p>
             <p>🟢 Joined Live: <b>{joinedCount}</b></p>
             <p>❌ Not Joined: <b>{notJoined}</b></p>
-            <p>📊 Join Percentage: <b>{percentage}%</b></p>
+            <p>📊 Attendance: <b>{percentage}%</b></p>
 
             <button className="start-live-btn" onClick={startLiveClass}>
               Start Live Class
@@ -315,18 +300,12 @@ export default function TeacherDashboard() {
             {liveSessionId && (
               <>
                 <button
-                  onClick={() => {
-                    // ensure we have fresh data before opening modal
-                    fetchLiveStudents();
-                    if (currentClass?.batch) fetchRegisteredStudents(currentClass.batch);
-                    setShowLiveModal(true);
-                  }}
+                  onClick={() => setShowLiveModal(true)}
                   className="view-live-btn"
                 >
                   View Live Students
                 </button>
 
-                {/* CSV DOWNLOAD BUTTON */}
                 <button
                   className="download-btn"
                   onClick={() =>
@@ -346,7 +325,7 @@ export default function TeacherDashboard() {
         )}
       </div>
 
-      {/* QR ATTENDANCE */}
+      {/* QR */}
       <div className="card">
         <h3>📷 QR Attendance</h3>
 
@@ -354,17 +333,17 @@ export default function TeacherDashboard() {
           {creatingQR ? "Starting..." : "Start QR Session"}
         </button>
 
-        {sessionCode && <p className="qr-code-text">Session Code: {sessionCode}</p>}
+        {sessionCode && <p>Session Code: {sessionCode}</p>}
       </div>
 
-      {/* LIVE STUDENTS MODAL */}
+      {/* Modal */}
       {showLiveModal && (
         <LiveClassModal
           sessionId={liveSessionId}
           subject={currentClass?.subject}
           students={liveStudents}
-          registeredStudents={registeredStudents}     // <-- full registered list
-          registeredCount={totalBatchStudents}        // <-- count
+          registeredStudents={registeredStudents}   // <--- FULL LIST
+          registeredCount={totalCount}             // <--- COUNT
           onClose={() => setShowLiveModal(false)}
           onFlag={flagStudent}
         />

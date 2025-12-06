@@ -621,6 +621,9 @@ app.get("/api/attendance/student/:studentId", async (req, res) => {
 // ----------------------------------------------
 // DOWNLOAD SESSION ATTENDANCE CSV (Teacher)
 // ----------------------------------------------
+// ----------------------------------------------
+// DOWNLOAD SESSION ATTENDANCE CSV WITH PRESENT/ABSENT STATUS
+// ----------------------------------------------
 app.get("/api/attendance/session/:sessionId/csv", async (req, res) => {
   try {
     const { sessionId } = req.params;
@@ -632,20 +635,45 @@ app.get("/api/attendance/session/:sessionId/csv", async (req, res) => {
 
     if (!session) return res.status(404).send("Session not found");
 
-    let csv = "Name,RollNumber,JoinTime,Type\n";
+    // ⭐ Get all registered students in this batch
+    const registeredStudents = await User.find({
+      role: "student",
+      batch: new RegExp(`^${session.batch}$`, "i")
+    }).select("name rollNumber _id");
 
-    // Add LIVE students
-    session.liveStudents.forEach((s) => {
-      csv += `${s.name},${s.rollNumber},${new Date(
-        s.loginTime
-      ).toLocaleString()},LIVE\n`;
+    // Prepare CSV
+    let csv = "Name,RollNumber,Time,Status\n";
+
+    // Convert present students into a map for quick lookup
+    const presentMap = {};
+
+    session.liveStudents.forEach((stu) => {
+      presentMap[stu.studentId] = {
+        name: stu.name,
+        roll: stu.rollNumber,
+        time: new Date(stu.loginTime).toLocaleString(),
+        status: "Present",
+      };
     });
 
-    // Add QR students
-    session.attendees.forEach((s) => {
-      csv += `${s.name},${s.rollNumber},${new Date(
-        s.time
-      ).toLocaleString()},QR\n`;
+    session.attendees.forEach((stu) => {
+      presentMap[stu.studentId] = {
+        name: stu.name,
+        roll: stu.rollNumber,
+        time: new Date(stu.time).toLocaleString(),
+        status: "Present",
+      };
+    });
+
+    // Add all registered students
+    registeredStudents.forEach((stu) => {
+      if (presentMap[stu._id]) {
+        // student was present
+        csv += `${presentMap[stu._id].name},${presentMap[stu._id].roll},${presentMap[stu._id].time},Present\n`;
+      } else {
+        // student was absent
+        csv += `${stu.name},${stu.rollNumber},-,Absent\n`;
+      }
     });
 
     res.setHeader("Content-Type", "text/csv");
@@ -662,25 +690,87 @@ app.get("/api/attendance/session/:sessionId/csv", async (req, res) => {
   }
 });
 
+
 // ----------------------------------------------
 // GET TOTAL REGISTERED STUDENTS IN A BATCH
 // ----------------------------------------------
-app.get("/api/batch/count/:batch", async (req, res) => {
+// ----------------------------------------------
+// GET REGISTERED STUDENTS OF A BATCH  (IMPORTANT)
+// ----------------------------------------------
+app.get("/api/batch/students/:batch", async (req, res) => {
   try {
     const batchRaw = req.params.batch;
     const batch = batchRaw.trim().toLowerCase();
 
-    const count = await User.countDocuments({
+    const students = await User.find({
       role: "student",
-      batch: new RegExp(`^${batch}$`, "i"),
-    });
+      batch: new RegExp(`^${batch}$`, "i")   // case-insensitive match
+    }).select("name rollNumber _id batch");
 
-    res.json({ total: count });
+    res.json({ students });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Batch count error" });
+    console.error("Batch student list error:", err);
+    res.status(500).json({ message: "Error fetching batch students" });
   }
 });
+
+// ----------------------------------------------
+// MARK ALL PRESENT STUDENTS AS PRESENT
+// ----------------------------------------------
+app.post("/api/live/mark-present", async (req, res) => {
+  try {
+    const { sessionId } = req.body;
+
+    const session = await Session.findById(sessionId);
+    if (!session)
+      return res.status(404).json({ message: "Session not found" });
+
+    // liveStudents ko attendees me daal do (without duplicates)
+    session.liveStudents.forEach((stu) => {
+      const exists = session.attendees.some(
+        (a) => a.studentId?.toString() === stu.studentId.toString()
+      );
+
+      if (!exists) {
+        session.attendees.push({
+          studentId: stu.studentId,
+          name: stu.name,
+          rollNumber: stu.rollNumber,
+          time: new Date(),
+        });
+      }
+    });
+
+    await session.save();
+
+    res.json({ message: "All present students marked successfully" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Server error while marking present" });
+  }
+});
+
+// ----------------------------------------------
+// DELETE TIMETABLE SLOT
+// ----------------------------------------------
+app.delete("/api/timetable/delete/:slotId", async (req, res) => {
+  try {
+    const { slotId } = req.params;
+
+    const deleted = await Timetable.findByIdAndDelete(slotId);
+
+    if (!deleted) {
+      return res.status(404).json({ message: "Slot not found" });
+    }
+
+    res.json({ message: "Timetable slot deleted successfully" });
+  } catch (err) {
+    console.error("Delete error:", err);
+    res.status(500).json({ message: "Error deleting timetable slot" });
+  }
+});
+
+
 
 
 // ----------------------------------------------
